@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JobListing extends Model
 {
@@ -19,6 +22,29 @@ class JobListing extends Model
         'salary_max' => 'integer',
     ];
 
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'company_id');
+    }
+
+    public function skills(): BelongsToMany
+    {
+        return $this->belongsToMany(Skill::class, 'job_skill')
+                    ->withPivot('required');
+    }
+
+    public function applications(): HasMany
+    {
+        return $this->hasMany(Application::class, 'job_id');
+    }
+
+    public function savedByDevelopers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'saved_jobs', 'job_id', 'developer_id')
+                    ->withTimestamps();
+    }
+
+    // Scopes
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('status', 'published');
