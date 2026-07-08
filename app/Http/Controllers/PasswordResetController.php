@@ -2,71 +2,57 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Http\Requests\Auth\ChangePasswordRequest;
+use App\Http\Requests\Auth\ForgotPasswordRequest;
+use App\Http\Requests\Auth\ResetPasswordRequest;
+use App\Services\AuthService;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Password;
 
 class PasswordResetController extends Controller
 {
+    public function __construct(private AuthService $authService) {}
 
-    public function changePassword(Request $request)
+    /**
+     * Change le mot de passe de l'utilisateur connecté.
+     */
+    public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'currentPassword' => 'required',
-            'newPassword' => 'required|string|min:8|confirmed'
-        ]);
-        $user = $request->user();
-        if (!Hash::check($data['currentPassword'], $user->password)) {
-            return response()->json([
-                'message' => 'Le mot de passe actuel est incorrect.'
-            ], 422);
-        }
-        $user->update([
-            'password' => Hash::make($request->password),
-        ]);
-        $currentTokenId = $request->user()->currentAccessToken()->id;
-        $user->tokens()->where('id', '!=', $currentTokenId)->delete();
+        $data = $request->validated();
 
-        return response()->json([
-            'message' => 'Mot de passe mis à jour avec succès.'
-        ]);
+        $this->authService->changePassword(
+            user: $request->user(),
+            currentPassword: $data['currentPassword'],
+            newPassword: $data['newPassword'],
+            currentTokenId: $request->user()->currentAccessToken()->id,
+        );
+
+        return response()->json(['message' => 'Mot de passe mis à jour avec succès.']);
     }
 
-    public function sendResetLink(Request $request)
+    /**
+     * Envoie un lien de réinitialisation par e-mail.
+     */
+    public function sendResetLink(ForgotPasswordRequest $request): JsonResponse
     {
-        $request->validate([
-            'email' => ['required', 'email'],
-        ]);
-
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
+        $status = Password::sendResetLink($request->only('email'));
 
         if ($status === Password::RESET_LINK_SENT) {
             return response()->json(['message' => 'Lien de réinitialisation envoyé.']);
         }
 
-        return response()->json([
-            'message' => 'Impossible d\'envoyer le lien.'
-        ], 422);
+        return response()->json(['message' => "Impossible d'envoyer le lien."], 422);
     }
 
-
-
-    public function reset(Request $request)
+    /**
+     * Réinitialise le mot de passe via le token reçu par e-mail.
+     */
+    public function reset(ResetPasswordRequest $request): JsonResponse
     {
-        $request->validate([
-            'token' => ['required'],
-            'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', Password::min(8)],
-        ]);
-
         $status = Password::reset(
-            //Extrait uniquement les champs email, password et password_confirmation de la requete http
+            // Extrait uniquement les champs nécessaires de la requête HTTP
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
                 $user->forceFill([
@@ -75,7 +61,8 @@ class PasswordResetController extends Controller
 
                 // Révoque tous les tokens Sanctum existants
                 $user->tokens()->delete();
-                //Declenche un evenement qui peut etre utilise pour l'envoie de mail de reussite de modification du mots de passe
+
+                // Déclenche un événement (ex: e-mail de confirmation)
                 event(new PasswordReset($user));
             }
         );
@@ -84,8 +71,6 @@ class PasswordResetController extends Controller
             return response()->json(['message' => 'Mot de passe réinitialisé avec succès.']);
         }
 
-        return response()->json([
-            'message' => 'Le token est invalide ou expiré.'
-        ], 422);
+        return response()->json(['message' => 'Le token est invalide ou expiré.'], 422);
     }
 }
