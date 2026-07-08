@@ -39,10 +39,16 @@ Route::prefix('v1')->group(function () {
 
     /*
     |----------------------------------------------------------------------
-    | Job Listings — routes protégées
+    | Job Listings — lecture publique, écriture protégée
     |----------------------------------------------------------------------
     */
+    Route::get('jobs',       [JobListingController::class, 'index']);
+    Route::get('jobs/{job}', [JobListingController::class, 'show']);
+
     Route::middleware('auth:sanctum')->group(function () {
-        Route::apiResource('jobs', JobListingController::class);
+        Route::post('jobs',              [JobListingController::class, 'store']);
+        Route::put('jobs/{job}',         [JobListingController::class, 'update']);
+        Route::patch('jobs/{job}',       [JobListingController::class, 'update']);
+        Route::delete('jobs/{job}',      [JobListingController::class, 'destroy']);
     });
 });
