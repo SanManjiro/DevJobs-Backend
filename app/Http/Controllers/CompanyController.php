@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\CompanyResource;
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class CompanyController extends Controller
 {
@@ -12,14 +13,16 @@ class CompanyController extends Controller
      *
      * GET /api/v1/companies
      */
-    public function index(): JsonResponse
+    public function index(): AnonymousResourceCollection
     {
         $companies = User::where('role', 'company')
             ->where('is_active', true)
             ->with('companyProfile')
+            // jobCount ne compte que les offres qu'un visiteur peut réellement ouvrir.
+            ->withCount(['jobListings' => fn ($q) => $q->published()->notExpired()])
             ->get();
 
-        return response()->json($companies);
+        return CompanyResource::collection($companies);
     }
 
     /**
@@ -27,17 +30,17 @@ class CompanyController extends Controller
      *
      * GET /api/v1/companies/{company}
      */
-    public function show(User $company): JsonResponse
+    public function show(User $company): CompanyResource
     {
-        if ($company->role !== 'company') {
-            return response()->json(['message' => 'Entreprise introuvable.'], 404);
-        }
+        abort_if($company->role !== 'company', 404, 'Entreprise introuvable.');
+        abort_if(! $company->is_active, 404, 'Entreprise introuvable.');
 
         $company->load([
             'companyProfile',
-            'jobListings' => fn($q) => $q->published()->notExpired()->with('skills'),
+            'jobListings' => fn ($q) => $q->published()->notExpired()->with('skills'),
         ]);
+        $company->loadCount(['jobListings' => fn ($q) => $q->published()->notExpired()]);
 
-        return response()->json($company);
+        return new CompanyResource($company);
     }
 }

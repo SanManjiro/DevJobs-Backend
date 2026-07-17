@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreJobListingRequest;
 use App\Http\Requests\UpdateJobListingRequest;
+use App\Http\Resources\JobResource;
 use App\Models\JobListing;
 use App\Services\JobListingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class JobListingController extends Controller
 {
@@ -19,11 +21,9 @@ class JobListingController extends Controller
      * GET /api/v1/jobs
      * Filtres : type, remote, experience_level, location, search, skill
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): AnonymousResourceCollection
     {
-        $jobs = $this->jobService->list($request);
-
-        return response()->json($jobs);
+        return JobResource::collection($this->jobService->list($request));
     }
 
     /**
@@ -38,7 +38,7 @@ class JobListingController extends Controller
             data: $request->validated(),
         );
 
-        return response()->json($job, 201);
+        return (new JobResource($job))->response()->setStatusCode(201);
     }
 
     /**
@@ -46,11 +46,15 @@ class JobListingController extends Controller
      *
      * GET /api/v1/jobs/{job}
      */
-    public function show(JobListing $job): JsonResponse
+    public function show(JobListing $job): JobResource
     {
+        // Une offre en brouillon ou expirée n'existe pas pour le public.
+        abort_if($job->status !== 'published', 404, 'Offre introuvable.');
+        abort_if($job->expires_at && $job->expires_at->isPast(), 404, 'Offre introuvable.');
+
         $job->load(['company.companyProfile', 'skills']);
 
-        return response()->json($job);
+        return new JobResource($job);
     }
 
     /**
@@ -58,11 +62,9 @@ class JobListingController extends Controller
      *
      * PUT/PATCH /api/v1/jobs/{job}
      */
-    public function update(UpdateJobListingRequest $request, JobListing $job): JsonResponse
+    public function update(UpdateJobListingRequest $request, JobListing $job): JobResource
     {
-        $updated = $this->jobService->update($job, $request->validated());
-
-        return response()->json($updated);
+        return new JobResource($this->jobService->update($job, $request->validated()));
     }
 
     /**
