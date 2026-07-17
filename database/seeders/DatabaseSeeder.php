@@ -100,6 +100,14 @@ class DatabaseSeeder extends Seeder
             }
         }
 
+        // Favoris : chaque développeur en garde quelques-uns, pour que l'écran
+        // « Saved » ne soit pas vide à la démo. unique(developer_id, job_id).
+        foreach ($developers as $dev) {
+            $dev->savedJobs()->syncWithoutDetaching(
+                $openJobs->random(min(3, $openJobs->count()))->pluck('id')->all(),
+            );
+        }
+
         $this->command->info(sprintf(
             'Seeded: %d users, %d jobs (%d public), %d applications. Login: admin@ / company@ / dev@devjobs.test — password',
             User::count(),

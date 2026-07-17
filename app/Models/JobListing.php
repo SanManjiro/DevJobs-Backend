@@ -43,8 +43,9 @@ class JobListing extends Model
 
     public function savedByDevelopers(): BelongsToMany
     {
+        // Voir User::savedJobs() : saved_jobs ne porte qu'un created_at.
         return $this->belongsToMany(User::class, 'saved_jobs', 'job_id', 'developer_id')
-                    ->withTimestamps();
+                    ->withPivot('created_at');
     }
 
     // Scopes

@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\Developer\ApplicationController as DeveloperApplicationController;
+use App\Http\Controllers\Developer\ProfileController as DeveloperProfileController;
+use App\Http\Controllers\Developer\SavedJobController;
 use App\Http\Controllers\JobListingController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\SkillController;
@@ -56,4 +59,28 @@ Route::prefix('v1')->group(function () {
         Route::patch('jobs/{job}',       [JobListingController::class, 'update']);
         Route::delete('jobs/{job}',      [JobListingController::class, 'destroy']);
     });
+
+    // Espace développeur : profil, candidatures, favoris. 'role:developer'
+    // refuse une entreprise ou un admin avant même d'atteindre le controller.
+    Route::middleware(['auth:sanctum', 'active', 'role:developer'])
+        ->prefix('developer')
+        ->group(function () {
+            // Profil
+            Route::get('profile',                   [DeveloperProfileController::class, 'show']);
+            Route::put('profile',                   [DeveloperProfileController::class, 'update']);
+            Route::post('profile/skills',           [DeveloperProfileController::class, 'addSkills']);
+            Route::delete('profile/skills/{skill}', [DeveloperProfileController::class, 'removeSkill']);
+
+            // Candidatures
+            Route::get('applications',                  [DeveloperApplicationController::class, 'index']);
+            Route::post('jobs/{job}/apply',             [DeveloperApplicationController::class, 'store']);
+            Route::delete('applications/{application}', [DeveloperApplicationController::class, 'destroy']);
+
+            // Favoris — la route d'ids passe avant {job}/save pour ne pas être
+            // capturée comme un paramètre.
+            Route::get('saved-jobs',        [SavedJobController::class, 'index']);
+            Route::get('saved-jobs/ids',    [SavedJobController::class, 'ids']);
+            Route::post('jobs/{job}/save',  [SavedJobController::class, 'store']);
+            Route::delete('jobs/{job}/save', [SavedJobController::class, 'destroy']);
+        });
 });
