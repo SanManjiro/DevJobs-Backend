@@ -33,6 +33,10 @@ class JobListingFactory extends Factory
             'experience_level' => fake()->randomElement(['junior', 'intermediaire', 'senior']),
             'status'           => 'published',
             'expires_at'       => null,
+            // Étalé sur deux mois : sans ça tout est publié « il y a 2 minutes »
+            // et l'affichage des dates relatives ne prouve rien.
+            'created_at'       => $created = fake()->dateTimeBetween('-60 days', 'now'),
+            'updated_at'       => $created,
         ];
     }
 
