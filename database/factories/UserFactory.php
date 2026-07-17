@@ -29,6 +29,10 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            // `role` est un enum NOT NULL sans défaut : sans lui, tout appel à
+            // cette factory échoue à l'insertion.
+            'role' => 'developer',
+            'is_active' => true,
             'remember_token' => Str::random(10),
         ];
     }
@@ -41,5 +45,23 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    public function company(): static
+    {
+        return $this->state(fn () => [
+            'role' => 'company',
+            'name' => fake()->unique()->company(),
+        ]);
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn () => ['role' => 'admin']);
+    }
+
+    public function disabled(): static
+    {
+        return $this->state(fn () => ['is_active' => false]);
     }
 }

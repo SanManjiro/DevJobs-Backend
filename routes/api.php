@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\JobListingController;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\SkillController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -32,6 +33,9 @@ Route::prefix('v1')->group(function () {
     //Companies (public)
     Route::get('companies',           [CompanyController::class, 'index']);
     Route::get('companies/{company}', [CompanyController::class, 'show']);
+
+    //Skills (public)
+    Route::get('skills', [SkillController::class, 'index']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('jobs',              [JobListingController::class, 'store']);
