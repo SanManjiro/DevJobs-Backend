@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\JobController as AdminJobController;
+use App\Http\Controllers\Admin\OverviewController as AdminOverviewController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\Company\ApplicationController as CompanyApplicationController;
@@ -98,5 +101,17 @@ Route::prefix('v1')->group(function () {
             Route::get('saved-jobs/ids',    [SavedJobController::class, 'ids']);
             Route::post('jobs/{job}/save',  [SavedJobController::class, 'store']);
             Route::delete('jobs/{job}/save', [SavedJobController::class, 'destroy']);
+        });
+
+    // Espace admin : modération des comptes et des offres.
+    Route::middleware(['auth:sanctum', 'active', 'role:admin'])
+        ->prefix('admin')
+        ->group(function () {
+            Route::get('overview',              [AdminOverviewController::class, 'index']);
+            Route::get('users',                 [AdminUserController::class, 'index']);
+            Route::patch('users/{user}/toggle', [AdminUserController::class, 'toggle']);
+            Route::delete('users/{user}',       [AdminUserController::class, 'destroy']);
+            Route::get('jobs',                  [AdminJobController::class, 'index']);
+            Route::delete('jobs/{job}',         [AdminJobController::class, 'destroy']);
         });
 });
