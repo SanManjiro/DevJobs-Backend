@@ -52,8 +52,11 @@ class User extends Authenticatable
 
     public function savedJobs(): BelongsToMany
     {
+        // La table saved_jobs n'a qu'un created_at (rempli par défaut DB à
+        // l'insertion) : withTimestamps() tenterait d'écrire un updated_at
+        // inexistant. Un favori est un point dans le temps, pas un modèle édité.
         return $this->belongsToMany(JobListing::class, 'saved_jobs', 'developer_id', 'job_id')
-                    ->withTimestamps();
+                    ->withPivot('created_at');
     }
 
     // Helpers
