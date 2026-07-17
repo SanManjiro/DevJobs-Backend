@@ -4,9 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+
+/**
+ * The token is a Sanctum plaintext string. It stays top-level in the response
+ * (not inside the resource) so the frontend can lift it straight into the
+ * httpOnly cookie.
+ */
 
 class AuthController extends Controller
 {
@@ -17,9 +24,12 @@ class AuthController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse
     {
-        $result = $this->authService->register($request->validated());
+        ['user' => $user, 'token' => $token] = $this->authService->register($request->validated());
 
-        return response()->json($result, 201);
+        return response()->json([
+            'user'  => new UserResource($user),
+            'token' => $token,
+        ], 201);
     }
 
     /**
@@ -27,12 +37,15 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        $result = $this->authService->login(
+        ['user' => $user, 'token' => $token] = $this->authService->login(
             $request->validated('email'),
             $request->validated('password'),
         );
 
-        return response()->json($result);
+        return response()->json([
+            'user'  => new UserResource($user),
+            'token' => $token,
+        ]);
     }
 
     /**
@@ -48,8 +61,8 @@ class AuthController extends Controller
     /**
      * Retourne l'utilisateur authentifié.
      */
-    public function me(Request $request): JsonResponse
+    public function me(Request $request): UserResource
     {
-        return response()->json($request->user());
+        return new UserResource($request->user());
     }
 }

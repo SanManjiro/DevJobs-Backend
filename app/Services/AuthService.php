@@ -16,16 +16,21 @@ class AuthService
     public function register(array $data): array
     {
         $user = User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
-            'password' => $data['password'],
-            'role'     => $data['role'],
+            'name'      => $data['name'],
+            'email'     => $data['email'],
+            'password'  => $data['password'],
+            'role'      => $data['role'],
+            // Set explicitly: the DB default doesn't hydrate the in-memory model,
+            // so the resource would serialize isActive as null otherwise.
+            'is_active' => true,
         ]);
 
-        if ($user->isDeveloper()) {
-            DeveloperProfile::create(['user_id' => $user->id]);
-        } else {
+        if ($user->isCompany()) {
             CompanyProfile::create(['user_id' => $user->id]);
+        } else {
+            // Developer and admin both get a developer profile; only a company
+            // gets a company profile. The reverse would give an admin one.
+            DeveloperProfile::create(['user_id' => $user->id]);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -42,9 +47,17 @@ class AuthService
     {
         $user = User::where('email', $email)->first();
 
-        if (! $user || ! Hash::check($password, $user->password)) {
+        if (! $user || ! $user->password || ! Hash::check($password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['Les identifiants sont incorrects.'],
+            ]);
+        }
+
+        // Un compte désactivé ne se connecte pas — sinon EnsureActive n'a rien
+        // à protéger puisque le token serait déjà émis.
+        if (! $user->is_active) {
+            throw ValidationException::withMessages([
+                'email' => ['Compte désactivé.'],
             ]);
         }
 
