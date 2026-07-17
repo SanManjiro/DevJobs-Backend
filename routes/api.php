@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\Company\ApplicationController as CompanyApplicationController;
+use App\Http\Controllers\Company\JobController as CompanyJobController;
+use App\Http\Controllers\Company\ProfileController as CompanyProfileController;
 use App\Http\Controllers\Developer\ApplicationController as DeveloperApplicationController;
 use App\Http\Controllers\Developer\ProfileController as DeveloperProfileController;
 use App\Http\Controllers\Developer\SavedJobController;
@@ -59,6 +62,19 @@ Route::prefix('v1')->group(function () {
         Route::patch('jobs/{job}',       [JobListingController::class, 'update']);
         Route::delete('jobs/{job}',      [JobListingController::class, 'destroy']);
     });
+
+    // Espace entreprise : lecture de ses propres offres (brouillons compris),
+    // candidatures reçues et profil. L'écriture des offres reste sur /v1/jobs.
+    Route::middleware(['auth:sanctum', 'active', 'role:company'])
+        ->prefix('company')
+        ->group(function () {
+            Route::get('jobs',                    [CompanyJobController::class, 'index']);
+            Route::get('jobs/{job}',              [CompanyJobController::class, 'show']);
+            Route::get('jobs/{job}/applications', [CompanyApplicationController::class, 'index']);
+            Route::patch('applications/{application}/status', [CompanyApplicationController::class, 'updateStatus']);
+            Route::get('profile',                 [CompanyProfileController::class, 'show']);
+            Route::put('profile',                 [CompanyProfileController::class, 'update']);
+        });
 
     // Espace développeur : profil, candidatures, favoris. 'role:developer'
     // refuse une entreprise ou un admin avant même d'atteindre le controller.

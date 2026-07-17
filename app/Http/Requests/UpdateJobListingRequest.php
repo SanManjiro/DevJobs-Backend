@@ -2,13 +2,16 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\MapsJobPayload;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateJobListingRequest extends FormRequest
 {
+    use MapsJobPayload;
+
     public function authorize(): bool
     {
-        // Vérifie que l'utilisateur est bien le propriétaire de l'offre
+        // Propriétaire uniquement.
         $job = $this->route('job');
         return $this->user()->isCompany() && $job->company_id === $this->user()->id;
     }
@@ -16,19 +19,19 @@ class UpdateJobListingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title'            => ['sometimes', 'string', 'max:150'],
-            'description'      => ['sometimes', 'string'],
-            'location'         => ['nullable', 'string', 'max:100'],
-            'type'             => ['sometimes', 'in:full_time,part_time,freelance,stage'],
-            'remote'           => ['sometimes', 'in:on_site,remote,hybrid'],
-            'salary_min'       => ['nullable', 'integer', 'min:0'],
-            'salary_max'       => ['nullable', 'integer', 'min:0', 'gte:salary_min'],
-            'experience_level' => ['sometimes', 'in:junior,intermediaire,senior'],
-            'status'           => ['sometimes', 'in:draft,published'],
-            'expires_at'       => ['nullable', 'date', 'after:today'],
-            'skills'           => ['sometimes', 'array'],
-            'skills.*.id'      => ['required_with:skills', 'integer', 'exists:skills,id'],
-            'skills.*.required'=> ['boolean'],
+            'title'           => ['sometimes', 'string', 'max:150'],
+            'description'     => ['sometimes', 'string'],
+            'location'        => ['nullable', 'string', 'max:100'],
+            'type'            => ['sometimes', 'in:full_time,part_time,freelance,stage'],
+            'remote'          => ['sometimes', 'in:on_site,remote,hybrid'],
+            'salaryMin'       => ['nullable', 'integer', 'min:0'],
+            'salaryMax'       => ['nullable', 'integer', 'min:0', 'gte:salaryMin'],
+            'experienceLevel' => ['sometimes', 'in:junior,intermediaire,senior'],
+            'status'          => ['sometimes', 'in:draft,published'],
+            'expiresAt'       => ['nullable', 'date', 'after:today'],
+            'skills'          => ['sometimes', 'array'],
+            'skills.*.id'     => ['required_with:skills', 'integer', 'exists:skills,id'],
+            'skills.*.required' => ['boolean'],
         ];
     }
 }

@@ -103,7 +103,7 @@ class AuthTest extends TestCase
                 'title' => 'x',
                 'description' => 'y',
                 'type' => 'full_time',
-                'experience_level' => 'junior',
+                'experienceLevel' => 'junior',
             ])
             ->assertStatus(403);
     }
@@ -118,7 +118,7 @@ class AuthTest extends TestCase
                 'title' => 'Senior Engineer',
                 'description' => 'Build things',
                 'type' => 'full_time',
-                'experience_level' => 'senior',
+                'experienceLevel' => 'senior',
             ])
             ->assertCreated()
             ->assertJsonPath('data.title', 'Senior Engineer');
