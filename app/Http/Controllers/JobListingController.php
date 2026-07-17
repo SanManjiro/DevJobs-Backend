@@ -35,7 +35,7 @@ class JobListingController extends Controller
     {
         $job = $this->jobService->create(
             company: $request->user(),
-            data: $request->validated(),
+            data: $request->mapped(),
         );
 
         return (new JobResource($job))->response()->setStatusCode(201);
@@ -64,7 +64,7 @@ class JobListingController extends Controller
      */
     public function update(UpdateJobListingRequest $request, JobListing $job): JobResource
     {
-        return new JobResource($this->jobService->update($job, $request->validated()));
+        return new JobResource($this->jobService->update($job, $request->mapped()));
     }
 
     /**

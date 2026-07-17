@@ -20,6 +20,11 @@ class ApplicationResource extends JsonResource
             'coverLetter' => $this->cover_letter,
             'appliedAt'   => $this->created_at?->toIso8601String(),
             'job'         => new JobResource($this->whenLoaded('job')),
+            // Vue entreprise : le nom du candidat, jamais son email.
+            'developer'   => $this->whenLoaded('developer', fn () => [
+                'id'   => $this->developer->id,
+                'name' => $this->developer->name,
+            ]),
         ];
     }
 }
