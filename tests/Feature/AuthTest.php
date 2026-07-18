@@ -124,6 +124,17 @@ class AuthTest extends TestCase
             ->assertJsonPath('data.title', 'Senior Engineer');
     }
 
+    public function test_login_is_rate_limited_after_too_many_attempts(): void
+    {
+        // 8 attempts per minute are allowed; the 9th must be refused with 429.
+        for ($i = 0; $i < 8; $i++) {
+            $this->postJson('/api/v1/auth/login', ['email' => 'x@y.com', 'password' => 'wrong']);
+        }
+
+        $this->postJson('/api/v1/auth/login', ['email' => 'x@y.com', 'password' => 'wrong'])
+            ->assertStatus(429);
+    }
+
     public function test_the_oauth_exchange_rejects_an_unknown_code(): void
     {
         $this->postJson('/api/v1/auth/exchange', ['code' => 'does-not-exist'])
