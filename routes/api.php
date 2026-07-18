@@ -23,10 +23,12 @@ Route::prefix('v1')->group(function () {
     //Auth
     Route::prefix('auth')->group(function () {
 
-        Route::post('register',        [AuthController::class, 'register']);
-        Route::post('login',           [AuthController::class, 'login']);
-        Route::post('forgot-password', [PasswordResetController::class, 'sendResetLink']);
-        Route::post('reset-password',  [PasswordResetController::class, 'reset']);
+        // throttle:N,1 = au plus N requêtes par minute et par IP. Ces routes
+        // sont la surface d'attaque par force brute — on la ferme.
+        Route::post('register',        [AuthController::class, 'register'])->middleware('throttle:8,1');
+        Route::post('login',           [AuthController::class, 'login'])->middleware('throttle:8,1');
+        Route::post('forgot-password', [PasswordResetController::class, 'sendResetLink'])->middleware('throttle:5,1');
+        Route::post('reset-password',  [PasswordResetController::class, 'reset'])->middleware('throttle:5,1');
 
         // OAuth — GitHub & Google. The provider redirects the browser to
         // {provider}/callback; the frontend then trades the one-time code.
@@ -34,7 +36,7 @@ Route::prefix('v1')->group(function () {
             ->whereIn('provider', ['github', 'google']);
         Route::get('{provider}/callback',  [SocialAuthController::class, 'callback'])
             ->whereIn('provider', ['github', 'google']);
-        Route::post('exchange',            [SocialAuthController::class, 'exchange']);
+        Route::post('exchange',            [SocialAuthController::class, 'exchange'])->middleware('throttle:20,1');
 
         // 'active' blocks a deactivated account whose token was issued before
         // it was disabled.

@@ -17,6 +17,16 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
+        // Ce seeder crée des comptes de démo dont le mot de passe est
+        // « password ». Le lancer en production offrirait un admin trivial au
+        // monde entier. En prod, utiliser : db:seed --class=AdminSeeder.
+        if (app()->environment('production')) {
+            $this->command->error(
+                'DatabaseSeeder est réservé au dev/démo. En production : php artisan db:seed --class=AdminSeeder'
+            );
+            return;
+        }
+
         $this->call(SkillSeeder::class);
         $skills = Skill::all();
 
