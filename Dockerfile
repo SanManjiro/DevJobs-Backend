@@ -54,4 +54,8 @@ RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framewor
 ENV PORT=10000
 EXPOSE 10000
 
-CMD php artisan config:clear && php artisan migrate --force && php artisan serve --host 0.0.0.0 --port ${PORT}
+# SkillSeeder (insertOrIgnore) and AdminSeeder (updateOrCreate, no-ops
+# without ADMIN_EMAIL/ADMIN_PASSWORD) are both idempotent, so it's safe to
+# run them on every boot instead of needing a one-off job (which requires a
+# paid plan and isn't available here).
+CMD php artisan config:clear && php artisan migrate --force && php artisan db:seed --class=SkillSeeder --force && php artisan db:seed --class=AdminSeeder --force && php artisan serve --host 0.0.0.0 --port ${PORT}
