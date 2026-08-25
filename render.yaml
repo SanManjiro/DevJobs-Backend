@@ -57,6 +57,32 @@ services:
         value: sync
       - key: FILESYSTEM_DISK
         value: local
+      # Frontend origin OAuth redirects the browser back to after issuing
+      # its one-time code. Fill in once the frontend is deployed.
+      - key: FRONTEND_URL
+        sync: false
+      # GitHub/Google OAuth apps: register them with these callback URLs,
+      # then paste the client id/secret here.
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_REDIRECT_URI
+        value: https://devjobs-backend-6gq1.onrender.com/api/v1/auth/github/callback
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        value: https://devjobs-backend-6gq1.onrender.com/api/v1/auth/google/callback
+      # Fill these in, then run `php artisan db:seed --class=AdminSeeder`
+      # via the Render shell to create the production admin account.
+      - key: ADMIN_NAME
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
 
 databases:
   - name: devjobs-db
