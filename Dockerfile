@@ -10,7 +10,18 @@ COPY resources ./resources
 RUN npm run build
 
 # --- PHP dependencies ---
-FROM composer:2 AS vendor
+# Built on php:8.4-cli (not the composer:2 image) so the PHP version used for
+# composer's platform checks matches the runtime image below: the lockfile
+# resolved Symfony packages that require PHP >= 8.4.1.
+FROM php:8.4-cli AS vendor
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libpq-dev \
+        libzip-dev \
+        libonig-dev \
+        unzip \
+    && docker-php-ext-install pdo pdo_pgsql pgsql mbstring bcmath zip \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 COPY composer.json composer.lock ./
 COPY app ./app
@@ -22,7 +33,7 @@ COPY artisan ./artisan
 RUN composer install --no-dev --no-scripts --optimize-autoloader --no-interaction --prefer-dist
 
 # --- Runtime image ---
-FROM php:8.3-cli
+FROM php:8.4-cli
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libpq-dev \
