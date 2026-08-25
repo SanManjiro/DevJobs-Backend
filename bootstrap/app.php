@@ -13,6 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Render (and most PaaS providers) terminate TLS at a load balancer
+        // and forward plain HTTP with X-Forwarded-* headers. Without this,
+        // url()/redirect() generate http:// links even though the app is
+        // only ever reached over https.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'role'   => \App\Http\Middleware\EnsureRole::class,
             'active' => \App\Http\Middleware\EnsureActive::class,
