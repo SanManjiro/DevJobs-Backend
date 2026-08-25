@@ -21,7 +21,12 @@
 /storage/*.key
 /storage/pail
 /vendor
+/.claude
+/.impeccable
+/docs/agents
+AGENTS.md
 _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+DevJobs_Projet.md

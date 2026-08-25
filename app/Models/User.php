@@ -5,15 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'name', 'email', 'password', 'role', 'is_active',
+        'provider', 'provider_id',
     ];
 
     protected $hidden = [
@@ -49,8 +52,11 @@ class User extends Authenticatable
 
     public function savedJobs(): BelongsToMany
     {
+        // La table saved_jobs n'a qu'un created_at (rempli par défaut DB à
+        // l'insertion) : withTimestamps() tenterait d'écrire un updated_at
+        // inexistant. Un favori est un point dans le temps, pas un modèle édité.
         return $this->belongsToMany(JobListing::class, 'saved_jobs', 'developer_id', 'job_id')
-                    ->withTimestamps();
+                    ->withPivot('created_at');
     }
 
     // Helpers
